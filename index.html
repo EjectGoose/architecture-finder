@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Architecture">
+  <meta name="theme-color" content="#0a0a0a">
+  <title>Architecture Finder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { 
+      height: 100%; 
+      overflow: hidden; 
+      background: #0a0a0a; 
+      font-family: 'Cormorant Garamond', Georgia, serif;
+    }
+    body { 
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+    
+    #app {
+      width: 100%;
+      height: 100%;
+      max-width: 430px;
+      margin: 0 auto;
+      background: #0a0a0a;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .status-bar {
+      height: 54px;
+      padding: 14px 20px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      padding-top: calc(14px + env(safe-area-inset-top));
+    }
+    
+    .scroll-container {
+      height: calc(100% - 140px - env(safe-area-inset-top));
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .scroll-container::-webkit-scrollbar { display: none; }
+    
+    .page-header {
+      padding: 16px 20px 8px;
+    }
+    
+    .page-title {
+      font-size: 34px;
+      font-weight: 300;
+      color: #fff;
+      margin: 0 0 4px;
+      letter-spacing: -0.02em;
+    }
+    
+    .page-subtitle {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+      margin: 0;
+    }
+    
+    .building-card {
+      background: linear-gradient(145deg, #151515 0%, #0d0d0d 100%);
+      border-radius: 20px;
+      margin: 12px 20px;
+      overflow: hidden;
+      transition: transform 0.3s ease;
+      border: 1px solid rgba(255,255,255,0.04);
+      cursor: pointer;
+    }
+    
+    .building-card:active {
+      transform: scale(0.98);
+    }
+    
+    .card-image {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      background: #1a1a1a;
+    }
+    
+    .card-content {
+      padding: 20px;
+    }
+    
+    .card-meta {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #c9a962;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .heritage-badge {
+      background: rgba(201, 169, 98, 0.2);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 9px;
+    }
+    
+    .card-title {
+      font-size: 22px;
+      font-weight: 400;
+      color: #fff;
+      margin: 0 0 6px 0;
+      line-height: 1.2;
+    }
+    
+    .card-architect {
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+      font-style: italic;
+      margin-bottom: 12px;
+    }
+    
+    .card-distance {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .tab-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: calc(86px + env(safe-area-inset-bottom));
+      background: linear-gradient(to top, #0a0a0a 60%, transparent);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 12px;
+      gap: 50px;
+    }
+    
+    .tab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      opacity: 0.4;
+      transition: opacity 0.3s ease;
+    }
+    
+    .tab-item.active {
+      opacity: 1;
+    }
+    
+    .tab-item.active .tab-label {
+      color: #c9a962;
+    }
+    
+    .tab-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+    }
+    
+    .detail-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #0a0a0a;
+      z-index: 50;
+      transform: translateX(100%);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .detail-overlay.active {
+      transform: translateX(0);
+    }
+    
+    .detail-image {
+      width: 100%;
+      height: 380px;
+      object-fit: cover;
+      background: #1a1a1a;
+    }
+    
+    .detail-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: calc(14px + env(safe-area-inset-top)) 20px 20px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
+    }
+    
+    .back-button {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    
+    .detail-content {
+      padding: 28px 24px calc(100px + env(safe-area-inset-bottom));
+      margin-top: -40px;
+      background: #0a0a0a;
+      border-radius: 32px 32px 0 0;
+      position: relative;
+    }
+    
+    .detail-badge {
+      position: absolute;
+      top: -16px;
+      left: 24px;
+      background: #c9a962;
+      color: #0a0a0a;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 8px 16px;
+      border-radius: 20px;
+    }
+    
+    .detail-title {
+      font-size: 32px;
+      font-weight: 400;
+      color: #fff;
+      margin: 20px 0 8px;
+      line-height: 1.15;
+    }
+    
+    .detail-architect {
+      font-size: 18px;
+      color: rgba(255,255,255,0.6);
+      font-style: italic;
+      margin-bottom: 24px;
+    }
+    
+    .detail-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+      padding: 20px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    .stat-item {
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: #fff;
+    }
+    
+    .stat-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+      margin-top: 4px;
+    }
+    
+    .detail-description {
+      font-size: 17px;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.75);
+      margin-bottom: 28px;
+    }
+    
+    .directions-button {
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, #c9a962 0%, #a08340 100%);
+      border: none;
+      border-radius: 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #0a0a0a;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    
+    .secondary-button {
+      width: 100%;
+      padding: 16px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .search-bar {
+      margin: 0 20px 8px;
+      position: relative;
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: 14px 20px 14px 48px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      color: #fff;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    
+    .search-input::placeholder {
+      color: rgba(255,255,255,0.3);
+    }
+    
+    .search-icon {
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    
+    .location-banner {
+      margin: 16px 20px;
+      padding: 24px 20px;
+      background: linear-gradient(135deg, rgba(201, 169, 98, 0.15) 0%, rgba(201, 169, 98, 0.05) 100%);
+      border: 1px solid rgba(201, 169, 98, 0.2);
+      border-radius: 16px;
+      text-align: center;
+    }
+    
+    .location-banner h3 {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #c9a962;
+      margin: 0 0 8px;
+    }
+    
+    .location-banner p {
+      font-size: 14px;
+      color: rgba(255,255,255,0.6);
+      margin: 0 0 16px;
+      line-height: 1.5;
+    }
+    
+    .enable-location-btn {
+      padding: 14px 28px;
+      background: #c9a962;
+      border: none;
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: #0a0a0a;
+      cursor: pointer;
+    }
+    
+    .enable-location-btn:disabled {
+      opacity: 0.6;
+    }
+    
+    .error-text {
+      color: #e57373;
+      font-size: 12px;
+      margin-top: 12px;
+    }
+    
+    .section-header {
+      padding: 20px 20px 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    .results-count {
+      color: #c9a962;
+    }
+    
+    .style-title {
+      padding: 16px 20px 12px;
+      font-size: 20px;
+      font-weight: 400;
+      color: #fff;
+      border-left: 2px solid #c9a962;
+      margin-left: 20px;
+      padding-left: 16px;
+    }
+    
+    .horizontal-scroll {
+      display: flex;
+      gap: 14px;
+      padding: 0 20px 20px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .horizontal-scroll::-webkit-scrollbar { display: none; }
+    
+    .horizontal-card {
+      flex-shrink: 0;
+      width: 260px;
+      scroll-snap-align: start;
+      background: linear-gradient(145deg, #151515 0%, #0d0d0d 100%);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.04);
+      cursor: pointer;
+    }
+    
+    .horizontal-card img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      background: #1a1a1a;
+    }
+    
+    .horizontal-card-content {
+      padding: 14px 16px;
+    }
+    
+    .horizontal-card-title {
+      font-size: 16px;
+      color: #fff;
+      margin: 0 0 4px;
+    }
+    
+    .horizontal-card-meta {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+    }
+    
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 60px 20px;
+      text-align: center;
+    }
+    
+    .loading-spinner {
+      width: 48px;
+      height: 48px;
+      border: 2px solid rgba(201, 169, 98, 0.2);
+      border-top-color: #c9a962;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .loading-text {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+    }
+    
+    .location-display {
+      margin: 0 20px 16px;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .location-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .location-info span {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+    }
+    
+    .refresh-btn {
+      padding: 8px 14px;
+      background: rgba(201, 169, 98, 0.15);
+      border: none;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      color: #c9a962;
+      cursor: pointer;
+    }
+    
+    .hidden { display: none; }
+    
+    .fade-in {
+      animation: fadeIn 0.5s ease forwards;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="status-bar">
+      <span id="time"></span>
+      <div style="display: flex; gap: 6px; align-items: center;">
+        <svg width="18" height="12" viewBox="0 0 18 12" fill="white"><rect x="0" y="4" width="3" height="8" rx="1" opacity="0.3"/><rect x="5" y="2" width="3" height="10" rx="1" opacity="0.5"/><rect x="10" y="0" width="3" height="12" rx="1" opacity="0.8"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+        <svg width="16" height="11" viewBox="0 0 16 11" fill="white"><path d="M8 2.5C10.5 2.5 12.7 3.6 14.2 5.4L15.6 4C13.7 1.8 11 0.5 8 0.5C5 0.5 2.3 1.8 0.4 4L1.8 5.4C3.3 3.6 5.5 2.5 8 2.5Z"/><path d="M8 5.5C9.7 5.5 11.2 6.2 12.3 7.4L13.7 6C12.2 4.4 10.2 3.5 8 3.5C5.8 3.5 3.8 4.4 2.3 6L3.7 7.4C4.8 6.2 6.3 5.5 8 5.5Z"/><circle cx="8" cy="9.5" r="1.5"/></svg>
+        <svg width="27" height="13" viewBox="0 0 27 13" fill="white"><rect x="0" y="0" width="24" height="13" rx="3" stroke="white" stroke-width="1" fill="none" opacity="0.4"/><rect x="2" y="2" width="18" height="9" rx="1.5" fill="white"/><rect x="25" y="4" width="2" height="5" rx="1" fill="white" opacity="0.5"/></svg>
+      </div>
+    </div>
+
+    <div class="scroll-container" id="scrollContainer">
+      <!-- Nearby Tab Content -->
+      <div id="nearbyTab">
+        <div class="page-header">
+          <h1 class="page-title">Discover</h1>
+          <p class="page-subtitle">Architectural landmarks near you</p>
+        </div>
+        
+        <div id="locationBanner" class="location-banner">
+          <h3>Enable Location</h3>
+          <p>Discover remarkable architecture around you using Wikidata's global database</p>
+          <button class="enable-location-btn" id="enableLocationBtn">Enable GPS</button>
+          <p id="locationError" class="error-text hidden"></p>
+        </div>
+        
+        <div id="searchSection" class="hidden">
+          <div class="search-bar">
+            <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" class="search-input" id="searchInput" placeholder="Search buildings, architects, styles...">
+          </div>
+          <div class="location-display">
+            <div class="location-info">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c9a962" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+              <span id="coordsDisplay"></span>
+            </div>
+            <button class="refresh-btn" id="refreshBtn">Refresh</button>
+          </div>
+        </div>
+        
+        <div id="loadingState" class="loading-state hidden">
+          <div class="loading-spinner"></div>
+          <p class="loading-text">Searching Wikidata for nearby landmarks...</p>
+        </div>
+        
+        <div id="resultsHeader" class="section-header hidden">
+          <span>Sorted by distance</span>
+          <span class="results-count" id="resultsCount"></span>
+        </div>
+        
+        <div id="buildingsList"></div>
+      </div>
+      
+      <!-- Explore Tab Content -->
+      <div id="exploreTab" class="hidden">
+        <div class="page-header">
+          <h1 class="page-title">Explore</h1>
+          <p class="page-subtitle">Browse by architectural style</p>
+        </div>
+        
+        <div id="exploreLocationBanner" class="location-banner">
+          <h3>Enable Location First</h3>
+          <p>Enable location to discover and explore buildings by architectural style</p>
+          <button class="enable-location-btn" id="exploreEnableBtn">Enable GPS</button>
+        </div>
+        
+        <div id="exploreLoading" class="loading-state hidden">
+          <div class="loading-spinner"></div>
+          <p class="loading-text">Loading architectural styles...</p>
+        </div>
+        
+        <div id="stylesList"></div>
+      </div>
+    </div>
+
+    <div class="tab-bar">
+      <div class="tab-item active" id="nearbyTabBtn" onclick="switchTab('nearby')">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c9a962" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span class="tab-label">Nearby</span>
+      </div>
+      <div class="tab-item" id="exploreTabBtn" onclick="switchTab('explore')">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24,7.76 14.12,14.12 7.76,16.24 9.88,9.88"/></svg>
+        <span class="tab-label">Explore</span>
+      </div>
+    </div>
+
+    <div class="detail-overlay" id="detailOverlay">
+      <img class="detail-image" id="detailImage" src="" alt="">
+      <div class="detail-header">
+        <div class="back-button" onclick="closeDetail()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </div>
+      </div>
+      <div class="detail-content">
+        <div class="detail-badge" id="detailBadge"></div>
+        <h1 class="detail-title" id="detailTitle"></h1>
+        <p class="detail-architect" id="detailArchitect"></p>
+        <div class="detail-stats">
+          <div class="stat-item"><div class="stat-value" id="detailYear"></div><div class="stat-label">Built</div></div>
+          <div class="stat-item"><div class="stat-value" id="detailStyle"></div><div class="stat-label">Style</div></div>
+          <div class="stat-item"><div class="stat-value" id="detailDistance"></div><div class="stat-label">Distance</div></div>
+        </div>
+        <p class="detail-description" id="detailDescription"></p>
+        <button class="directions-button" id="directionsBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+          Get Directions
+        </button>
+        <button class="secondary-button" id="wikidataBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          View on Wikidata
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const WIKIDATA_ENDPOINT = 'https://query.wikidata.org/sparql';
+    
+    let userLocation = null;
+    let buildings = [];
+    let selectedBuilding = null;
+    let currentTab = 'nearby';
+
+    // Update time
+    function updateTime() {
+      const now = new Date();
+      document.getElementById('time').textContent = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).replace(' ', '');
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    // Wikidata query
+    function buildNearbyQuery(lat, lng, radiusKm = 25) {
+      return `
+        SELECT DISTINCT ?building ?buildingLabel ?buildingDescription ?lat ?lon ?architect ?architectLabel ?year ?styleLabel ?image ?heritage WHERE {
+          SERVICE wikibase:around {
+            ?building wdt:P625 ?location .
+            bd:serviceParam wikibase:center "Point(${lng} ${lat})"^^geo:wktLiteral .
+            bd:serviceParam wikibase:radius "${radiusKm}" .
+          }
+          VALUES ?type { wd:Q41176 wd:Q811979 wd:Q3947 wd:Q570116 wd:Q35112127 wd:Q1497375 wd:Q16970 wd:Q34627 wd:Q5707594 wd:Q44539 wd:Q32815 wd:Q160742 wd:Q1195942 wd:Q751876 wd:Q4989906 wd:Q41253 wd:Q57821 wd:Q83405 wd:Q55488 wd:Q24398318 wd:Q12518 wd:Q317557 }
+          ?building wdt:P31 ?type .
+          ?building p:P625 ?coordStatement .
+          ?coordStatement psv:P625 ?coordNode .
+          ?coordNode wikibase:geoLatitude ?lat .
+          ?coordNode wikibase:geoLongitude ?lon .
+          OPTIONAL { ?building wdt:P84 ?architect . }
+          OPTIONAL { ?building wdt:P571 ?inception . BIND(YEAR(?inception) AS ?year) }
+          OPTIONAL { ?building wdt:P149 ?style . }
+          OPTIONAL { ?building wdt:P18 ?image . }
+          OPTIONAL { ?building wdt:P1435 ?heritage . }
+          SERVICE wikibase:label { bd:serviceParam wikibase:language "en,de,fr,es,it,pt,ja,zh" . }
+        }
+        LIMIT 50
+      `;
+    }
+
+    function buildBroaderQuery(lat, lng, radiusKm = 75) {
+      return `
+        SELECT DISTINCT ?building ?buildingLabel ?buildingDescription ?lat ?lon ?architect ?architectLabel ?year ?styleLabel ?image WHERE {
+          SERVICE wikibase:around {
+            ?building wdt:P625 ?location .
+            bd:serviceParam wikibase:center "Point(${lng} ${lat})"^^geo:wktLiteral .
+            bd:serviceParam wikibase:radius "${radiusKm}" .
+          }
+          { ?building wdt:P31/wdt:P279* wd:Q41176 . } UNION { ?building wdt:P31/wdt:P279* wd:Q811979 . } UNION { ?building wdt:P84 ?anyArchitect . }
+          ?building p:P625 ?coordStatement .
+          ?coordStatement psv:P625 ?coordNode .
+          ?coordNode wikibase:geoLatitude ?lat .
+          ?coordNode wikibase:geoLongitude ?lon .
+          OPTIONAL { ?building wdt:P84 ?architect . }
+          OPTIONAL { ?building wdt:P571 ?inception . BIND(YEAR(?inception) AS ?year) }
+          OPTIONAL { ?building wdt:P149 ?style . }
+          OPTIONAL { ?building wdt:P18 ?image . }
+          SERVICE wikibase:label { bd:serviceParam wikibase:language "en,de,fr,es,it,pt,ja,zh" . }
+        }
+        LIMIT 40
+      `;
+    }
+
+    async function fetchNearbyBuildings(lat, lng) {
+      const query = buildNearbyQuery(lat, lng, 25);
+      const url = `${WIKIDATA_ENDPOINT}?query=${encodeURIComponent(query)}&format=json`;
+      
+      const response = await fetch(url, { headers: { 'Accept': 'application/sparql-results+json' } });
+      if (!response.ok) throw new Error('Query failed');
+      
+      const data = await response.json();
+      let results = parseWikidataResults(data);
+      
+      if (results.length < 5) {
+        const broaderQuery = buildBroaderQuery(lat, lng, 75);
+        const broaderUrl = `${WIKIDATA_ENDPOINT}?query=${encodeURIComponent(broaderQuery)}&format=json`;
+        const broaderResponse = await fetch(broaderUrl, { headers: { 'Accept': 'application/sparql-results+json' } });
+        if (broaderResponse.ok) {
+          const broaderData = await broaderResponse.json();
+          const broaderResults = parseWikidataResults(broaderData);
+          const existingIds = new Set(results.map(r => r.id));
+          for (const building of broaderResults) {
+            if (!existingIds.has(building.id)) results.push(building);
+          }
+        }
+      }
+      
+      return results;
+    }
+
+    function parseWikidataResults(data) {
+      const buildingsMap = new Map();
+      for (const result of data.results.bindings) {
+        const id = result.building?.value?.split('/').pop();
+        if (!id) continue;
+        const name = result.buildingLabel?.value;
+        if (!name || name === id) continue;
+        if (!buildingsMap.has(id)) {
+          buildingsMap.set(id, {
+            id, name,
+            description: result.buildingDescription?.value || '',
+            lat: parseFloat(result.lat?.value),
+            lng: parseFloat(result.lon?.value),
+            architect: result.architectLabel?.value || 'Unknown architect',
+            year: result.year?.value ? parseInt(result.year.value) : null,
+            style: result.styleLabel?.value || 'Architecture',
+            image: result.image?.value || null,
+            isHeritage: !!result.heritage,
+            wikidataId: id
+          });
+        }
+      }
+      return Array.from(buildingsMap.values());
+    }
+
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    function formatDistance(km) {
+      if (km < 1) return `${Math.round(km * 1000)}m`;
+      if (km < 10) return `${km.toFixed(1)}km`;
+      return `${Math.round(km)}km`;
+    }
+
+    function getPlaceholderImage(style, name) {
+      const hash = name.split('').reduce((a, b) => ((a << 5) - a) + b.charCodeAt(0), 0);
+      const hue = Math.abs(hash) % 360;
+      return `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><defs><linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:hsl(${hue}, 25%, 18%)"/><stop offset="100%" style="stop-color:hsl(${hue + 30}, 30%, 12%)"/></linearGradient></defs><rect fill="url(#bg)" width="800" height="600"/><g fill="none" stroke="hsl(${hue}, 40%, 35%)" stroke-width="2"><rect x="300" y="200" width="200" height="280" rx="4"/><rect x="330" y="240" width="50" height="60" rx="2"/><rect x="420" y="240" width="50" height="60" rx="2"/><rect x="330" y="340" width="50" height="60" rx="2"/><rect x="420" y="340" width="50" height="60" rx="2"/><rect x="370" y="420" width="60" height="60" rx="2"/><polygon points="400,120 520,200 280,200"/></g><text x="400" y="550" font-family="Georgia, serif" font-size="24" fill="hsl(${hue}, 30%, 50%)" text-anchor="middle" opacity="0.7">${style || 'Architecture'}</text></svg>`)}`;
+    }
+
+    // UI Functions
+    function show(id) { document.getElementById(id).classList.remove('hidden'); }
+    function hide(id) { document.getElementById(id).classList.add('hidden'); }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      if (tab === 'nearby') {
+        show('nearbyTab');
+        hide('exploreTab');
+        document.getElementById('nearbyTabBtn').classList.add('active');
+        document.getElementById('nearbyTabBtn').querySelector('svg').setAttribute('stroke', '#c9a962');
+        document.getElementById('exploreTabBtn').classList.remove('active');
+        document.getElementById('exploreTabBtn').querySelector('svg').setAttribute('stroke', 'rgba(255,255,255,0.4)');
+      } else {
+        hide('nearbyTab');
+        show('exploreTab');
+        document.getElementById('exploreTabBtn').classList.add('active');
+        document.getElementById('exploreTabBtn').querySelector('svg').setAttribute('stroke', '#c9a962');
+        document.getElementById('nearbyTabBtn').classList.remove('active');
+        document.getElementById('nearbyTabBtn').querySelector('svg').setAttribute('stroke', 'rgba(255,255,255,0.4)');
+        renderExploreTab();
+      }
+      document.getElementById('scrollContainer').scrollTop = 0;
+    }
+
+    function renderBuildingCard(building, index) {
+      const card = document.createElement('div');
+      card.className = 'building-card fade-in';
+      card.style.animationDelay = `${index * 0.05}s`;
+      card.innerHTML = `
+        <img class="card-image" src="${building.image || getPlaceholderImage(building.style, building.name)}" alt="${building.name}" onerror="this.src='${getPlaceholderImage(building.style, building.name)}'">
+        <div class="card-content">
+          <div class="card-meta">${building.style}${building.year ? ` · ${building.year}` : ''}${building.isHeritage ? '<span class="heritage-badge">Heritage</span>' : ''}</div>
+          <h2 class="card-title">${building.name}</h2>
+          <p class="card-architect">by ${building.architect}</p>
+          ${building.distance !== undefined ? `<div class="card-distance"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${formatDistance(building.distance)} away</div>` : ''}
+        </div>
+      `;
+      card.onclick = () => openDetail(building);
+      return card;
+    }
+
+    function renderBuildingsList(filteredBuildings) {
+      const container = document.getElementById('buildingsList');
+      container.innerHTML = '';
+      filteredBuildings.forEach((building, index) => {
+        container.appendChild(renderBuildingCard(building, index));
+      });
+    }
+
+    function renderExploreTab() {
+      if (!userLocation) {
+        show('exploreLocationBanner');
+        hide('exploreLoading');
+        document.getElementById('stylesList').innerHTML = '';
+        return;
+      }
+      
+      hide('exploreLocationBanner');
+      
+      if (buildings.length === 0) {
+        show('exploreLoading');
+        return;
+      }
+      
+      hide('exploreLoading');
+      
+      const styleGroups = buildings.reduce((acc, building) => {
+        const style = building.style || 'Other';
+        if (!acc[style]) acc[style] = [];
+        acc[style].push(building);
+        return acc;
+      }, {});
+      
+      const container = document.getElementById('stylesList');
+      container.innerHTML = '';
+      
+      Object.entries(styleGroups).forEach(([style, styleBuildings]) => {
+        const section = document.createElement('div');
+        section.innerHTML = `<h2 class="style-title">${style}</h2>`;
+        
+        const scroll = document.createElement('div');
+        scroll.className = 'horizontal-scroll';
+        
+        styleBuildings.forEach(building => {
+          const card = document.createElement('div');
+          card.className = 'horizontal-card';
+          card.innerHTML = `
+            <img src="${building.image || getPlaceholderImage(building.style, building.name)}" alt="${building.name}" onerror="this.src='${getPlaceholderImage(building.style, building.name)}'">
+            <div class="horizontal-card-content">
+              <h3 class="horizontal-card-title">${building.name}</h3>
+              <p class="horizontal-card-meta">${building.architect}${building.year ? `, ${building.year}` : ''}</p>
+            </div>
+          `;
+          card.onclick = () => openDetail(building);
+          scroll.appendChild(card);
+        });
+        
+        section.appendChild(scroll);
+        container.appendChild(section);
+      });
+    }
+
+    function openDetail(building) {
+      selectedBuilding = building;
+      document.getElementById('detailImage').src = building.image || getPlaceholderImage(building.style, building.name);
+      document.getElementById('detailImage').onerror = function() { this.src = getPlaceholderImage(building.style, building.name); };
+      document.getElementById('detailBadge').textContent = building.isHeritage ? 'Heritage Site' : building.style;
+      document.getElementById('detailTitle').textContent = building.name;
+      document.getElementById('detailArchitect').textContent = `by ${building.architect}`;
+      document.getElementById('detailYear').textContent = building.year || '—';
+      document.getElementById('detailStyle').textContent = building.style.split(' ')[0];
+      document.getElementById('detailStyle').style.fontSize = building.style.length > 12 ? '12px' : '18px';
+      document.getElementById('detailDistance').textContent = building.distance !== undefined ? formatDistance(building.distance) : '—';
+      document.getElementById('detailDescription').textContent = building.description || '';
+      document.getElementById('detailDescription').style.display = building.description ? 'block' : 'none';
+      
+      document.getElementById('directionsBtn').onclick = () => {
+        window.open(`https://www.google.com/maps/dir/?api=1&destination=${building.lat},${building.lng}`, '_blank');
+      };
+      
+      document.getElementById('wikidataBtn').onclick = () => {
+        window.open(`https://www.wikidata.org/wiki/${building.wikidataId}`, '_blank');
+      };
+      
+      document.getElementById('detailOverlay').classList.add('active');
+      document.getElementById('detailOverlay').scrollTop = 0;
+    }
+
+    function closeDetail() {
+      document.getElementById('detailOverlay').classList.remove('active');
+      selectedBuilding = null;
+    }
+
+    async function loadBuildings() {
+      if (!userLocation) return;
+      
+      show('loadingState');
+      hide('resultsHeader');
+      document.getElementById('buildingsList').innerHTML = '';
+      
+      try {
+        const results = await fetchNearbyBuildings(userLocation.lat, userLocation.lng);
+        buildings = results.map(building => ({
+          ...building,
+          distance: calculateDistance(userLocation.lat, userLocation.lng, building.lat, building.lng)
+        })).sort((a, b) => a.distance - b.distance);
+        
+        hide('loadingState');
+        
+        if (buildings.length > 0) {
+          show('resultsHeader');
+          document.getElementById('resultsCount').textContent = `${buildings.length} found`;
+          renderBuildingsList(buildings);
+        }
+        
+        if (currentTab === 'explore') {
+          renderExploreTab();
+        }
+      } catch (error) {
+        console.error(error);
+        hide('loadingState');
+        document.getElementById('buildingsList').innerHTML = '<div class="location-banner"><p>Failed to load buildings. Please try again.</p></div>';
+      }
+    }
+
+    function requestLocation() {
+      const btn = document.getElementById('enableLocationBtn');
+      const exploreBtn = document.getElementById('exploreEnableBtn');
+      btn.disabled = true;
+      exploreBtn.disabled = true;
+      btn.textContent = 'Locating...';
+      exploreBtn.textContent = 'Locating...';
+      
+      hide('locationError');
+      
+      if (!navigator.geolocation) {
+        document.getElementById('locationError').textContent = 'Geolocation not supported';
+        show('locationError');
+        btn.disabled = false;
+        exploreBtn.disabled = false;
+        btn.textContent = 'Enable GPS';
+        exploreBtn.textContent = 'Enable GPS';
+        return;
+      }
+      
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
+          
+          hide('locationBanner');
+          hide('exploreLocationBanner');
+          show('searchSection');
+          document.getElementById('coordsDisplay').textContent = `${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)}`;
+          
+          loadBuildings();
+        },
+        (error) => {
+          let msg = 'Unable to get location';
+          if (error.code === 1) msg = 'Location access denied';
+          if (error.code === 2) msg = 'Location unavailable';
+          if (error.code === 3) msg = 'Request timed out';
+          
+          document.getElementById('locationError').textContent = msg;
+          show('locationError');
+          btn.disabled = false;
+          exploreBtn.disabled = false;
+          btn.textContent = 'Enable GPS';
+          exploreBtn.textContent = 'Enable GPS';
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+      );
+    }
+
+    // Event listeners
+    document.getElementById('enableLocationBtn').onclick = requestLocation;
+    document.getElementById('exploreEnableBtn').onclick = requestLocation;
+    document.getElementById('refreshBtn').onclick = loadBuildings;
+
+    document.getElementById('searchInput').oninput = (e) => {
+      const query = e.target.value.toLowerCase();
+      const filtered = buildings.filter(b => 
+        b.name.toLowerCase().includes(query) ||
+        b.architect.toLowerCase().includes(query) ||
+        b.style.toLowerCase().includes(query)
+      );
+      document.getElementById('resultsCount').textContent = `${filtered.length} found`;
+      renderBuildingsList(filtered);
+    };
+
+    // Handle back gesture
+    window.addEventListener('popstate', () => {
+      if (document.getElementById('detailOverlay').classList.contains('active')) {
+        closeDetail();
+      }
+    });
+  </script>
+</body>
+</html>
